@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map</title>
+</head>
+<link rel="stylesheet" href="css/demo-center.css"/>
+<script src="lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=99c4db5a22e31cdd265fb413f8f4c993"></script>
+
+
+<link rel="stylesheet" href="bootstrap/css/bootstrap.css" media="all">
+<link rel="stylesheet" href="lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<script src="bootstrap/js/bootstrap.js"></script>
+
+
+<style>
+
+    .input-div{
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+    }
+
+    #clearRoute{
+        position: fixed;
+        left: 1rem;
+        bottom: 2.5rem;
+    }
+
+
+</style>
+
+<link rel="stylesheet" href="css/map.css">
+<body>
+    <div id="container">
+    </div>
+    <div class="info" style="height: 48px;">
+        <div class="input-item">
+            <input id='tipinput' type="text" placeholder="输入地点" style="height: auto;">
+            <a id="searchBtn" class="btn btn-primary" title="到百度首页" href="#" style="margin-left: 10px;">
+                <i class="fa fa-search fa-lg"></i></a>
+        </div>
+        <a id="clearRoute" class="btn btn-primary" title="清空poi" href="#" style="">
+            <i class="fa fa-minus-square fa-lg"></i></a>
+    </div>
+</div>
+
+</body>
+<script type="text/javascript">
+    $(function () {
+
+        let locDetail = null;
+        let pointShow = null;
+
+        var map = new AMap.Map('container', {
+            center:[114.35068,30.60543],
+            zoom:11
+        });
+
+        init();
+        //总初始化函数
+        function init(){
+            initPlugin();
+        }
+
+        function refreshSinglePointShow(lng,lat){
+            if (pointShow) {
+                map.remove(pointShow);
+                pointShow = null;
+            }
+            pointShow = new AMap.Marker({
+                position: [lng,lat],
+                icon: getIcon(0),
+                offset: new AMap.Pixel(-20,-50),
+                animation: "AMAP_ANIMATION_DROP"
+            });
+            map.add(pointShow);
+        }
+
+        function getIcon(n){
+            switch (n) {
+                case 0:
+                    //blue
+                    return new AMap.Icon({
+                        size: new AMap.Size(40, 50),    // 图标尺寸
+                        image:'images/location-alt-blue.svg',  // Icon的图像
+                        imageOffset: new AMap.Pixel(0,0),  // 图像相对展示区域的偏移量，适于雪碧图
+                        imageSize: new AMap.Size(40, 50)   // 根据所设置的大小拉伸或压缩图片
+                    });
+                case 1:
+                    //green
+                    return new AMap.Icon({
+                        size: new AMap.Size(40, 50),    // 图标尺寸
+                        image:'images/location-alt-green.svg',  // Icon的图像
+                        imageOffset: new AMap.Pixel(0, 0),  // 图像相对展示区域的偏移量，适于雪碧图等
+                        imageSize: new AMap.Size(40, 50)   // 根据所设置的大小拉伸或压缩图片
+                    });
+                case 2:
+                    //orange
+                    return new AMap.Icon({
+                        size: new AMap.Size(40, 50),    // 图标尺寸
+                        image:'images/location-alt-orange.svg',  // Icon的图像
+                        imageOffset: new AMap.Pixel(0, 0),  // 图像相对展示区域的偏移量，适于雪碧图等
+                        imageSize: new AMap.Size(40, 50)   // 根据所设置的大小拉伸或压缩图片
+                    });
+            }
+
+        }
+
+        $("#clearRoute").click(function () {
+            if (pointShow) {
+                map.remove(pointShow);
+                pointShow = null;
+            };
+        });
+
+
+        //控件初始化
+        function initPlugin(){
+            // 添加地图controlBar组件
+            map.plugin(["AMap.ControlBar"],function(){
+                var controlBar = new AMap.ControlBar({
+                    position: {
+                        top:  '150px',
+                        right: '10px'
+                    }
+                });
+                map.addControl(controlBar)
+            });
+
+            //地图切换控件初始化
+            map.plugin(["AMap.MapType"],function(){
+                //地图类型切换
+                var type= new AMap.MapType({
+                    defaultType:0 //使用2D地图
+                });
+                map.addControl(type);
+            });
+
+            //鹰眼初始化
+            map.plugin(["AMap.OverView"],function(){
+                view = new AMap.OverView({isOpen:true});
+                map.addControl(view);
+            });
+
+            AMap.plugin('AMap.Autocomplete', function(){
+                // 实例化Autocomplete
+                var autoOptions = {
+                    // input 为绑定输入提示功能的input的DOM ID
+                    input: 'tipinput'
+                };
+                var autoComplete= new AMap.Autocomplete(autoOptions);
+                // 无需再手动执行search方法，autoComplete会根据传入input对应的DOM动态触发search
+                $("#searchBtn").click(function () {
+                    let searchText = $("#tipinput").val();
+                    if(searchText === ""){
+                        return;
+                    }
+                    autoComplete.search(searchText, function(status, result) {
+                        // 搜索成功时，result即是对应的匹配数据
+                        if(status !== "complete"&& result.info === 'OK'){
+                            alert("search服务出错");
+                            return;
+                        }
+                        locDetail = result.tips[0];
+                        let location = locDetail.location;
+                        if(location === ""){
+                            alert("首选地址为空");
+                            return;
+                        }
+                        refreshSinglePointShow(location.lng,location.lat);
+                        map.panTo([location.lng,location.lat]);
+                        $(this).blur();
+                        $(".amap-sug-result").css("opacity",0);
+                        // setTimeout(function () {
+                        //     $(".amap-sug-result").css("visibility","hidden");
+                        // },300);
+
+                    });
+
+                    $("#tipinput").click(function () {
+                        $(".amap-sug-result").css("opacity",1);
+                    })
+                })
+
+            })
+        }
+    });
+</script>
+</html>

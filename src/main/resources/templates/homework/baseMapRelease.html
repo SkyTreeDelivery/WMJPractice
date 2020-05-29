@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map</title>
+</head>
+<link rel="stylesheet" href="css/demo-center.css"/>
+<script src="lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=99c4db5a22e31cdd265fb413f8f4c993"></script>
+
+<link rel="stylesheet" href="css/map.css">
+
+
+<style>
+
+    .input-div{
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+    }
+
+    #clearRoute{
+        position: fixed;
+        left: 1rem;
+        bottom: 2.5rem;
+    }
+
+
+</style>
+
+<body>
+<div id="container">
+</div>
+</div>
+
+</body>
+<script type="text/javascript">
+    $(function (){
+
+        var map = new AMap.Map('container', {
+            center:[114.35068,30.60543],
+            zoom:3,
+            defaultLayer: new AMap.TileLayer.WMS({
+                url: 'http://47.100.37.7:5050/geoserver/wmj/wms', // wms服务的url地址
+                blend: false, // 地图级别切换时，不同级别的图片是否进行混合
+                tileSize: 512, // 加载WMS图层服务时，图片的分片大小
+                params: {
+                    "LAYERS": 'wmj:allGeoInfo',
+                    VERSION:'1.3.0'
+                } // OGC标准的WMS地图服务的GetMap接口的参数
+            })
+        });
+
+        init();
+        //总初始化函数
+        function init(){
+
+        }
+
+
+    });
+</script>
+</html>

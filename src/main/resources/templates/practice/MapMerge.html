@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<link rel="stylesheet" href="/css/demo-center.css"/>
+<script src="/lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=99c4db5a22e31cdd265fb413f8f4c993"></script>
+<link rel="stylesheet" href="/lib/ol/ol.css" type="text/css">
+<script src="/lib/ol/ol.js"></script>
+
+<script src="/lib/utils/util.js" charset="utf-8"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.js"></script>
+<link rel="stylesheet" href="/lib/layui-v2.5.5/css/layui.css" media="all">
+<link rel="stylesheet" href="/css/layuimini.css?v=2.0.0" media="all">
+<link rel="stylesheet" href="/lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+<script src="/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+
+<link rel="stylesheet" href="/css/map.css">
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.min.js"></script>
+<script src="/js/lay-module/layuimini/miniTab.js"></script>
+
+<body>
+
+
+<div id="map" class="map"></div>
+
+
+<div id="layerList">
+
+    <form class="layui-form"@submit.prevent>
+        <div v-for="(layer,index) in layers">
+
+            <div class="layui-row">
+                <div class="layui-col-md1">
+                    <input type="checkbox">
+                </div>
+                <div class="layui-col-md5">
+                    <label class="layui-form-label">{{layer.dbname}}</label>
+                </div>
+                <div class="layui-col-md2">
+                    <button @click="loadLayer(index)" :class="loadClass(index)" class=" layui-btn-xs" >载入</button>
+                </div>
+                <div class="layui-col-md2">
+                    <button  @click="showDetail(index)" :class="detailClass(index)"  class="layui-btn-xs" >查看</button>
+                </div>
+                <div class="layui-col-md2 ">
+                    <button @click="deleteItem(index)" class="layui-btn layui-btn-danger layui-btn-xs">删除</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+
+<script type="text/javascript">
+
+
+    var layer = null;
+    var form = null;
+    var miniTab = null;
+
+    var map = null;  // 地图
+
+    var tileWMSSource = null; // 瓦片数据源
+    // var vectorSource = null; // 矢量数据源
+    var vectorSources = []
+
+    var tileLayer = null;  // 瓦片图层
+    // var vectorLayer = null; // 矢量图层
+    var vectorLayers = []
+
+    let vm = null;
+
+    // 执行初始化
+    init();
+
+
+    // 初始化函数
+    function init() {
+        initVue();
+        initFrom();
+        initLayerui();
+        initMap();
+    }
+
+
+    function initVue() {
+        vm = new Vue({
+            el:'#layerList',
+            data:{
+                layers:[
+                //     {
+                //     dbname:"china_polygon",
+                //     type:"polygon",
+                //     data:null
+                // },{
+                //     dbname:"river_polyline",
+                //     type:"polygon",
+                //     data:null
+                // }
+                ]
+            },
+            mounted () {
+                let tablenames = sessionStorage.getItem("tablenames") || null;
+                if(!tablenames){
+                    axios
+                        .get('http://localhost:8080/data/getAllTableNames')
+                        .then(function (res) {
+                            let tablenames = res.data.data;
+                            // 将tablename存入session
+                            sessionStorage.setItem("tablenames", JSON.stringify(tablenames))
+                        })
+                }else{
+                    tablenames = JSON.parse(tablenames)
+                }
+                for (let index in tablenames) {
+                    let tablename = tablenames[index]
+                    let tableInfo ={
+                        id:null,
+                        dbname:tablename,
+                        type:null,
+                        data:null,
+                        features:null
+                    }
+                    this.layers.push(tableInfo);
+                    if(form){
+                        form.render();
+                    }
+                    vectorLayers.push(null)
+                    vectorSources.push(null)
+                }
+
+            },
+            methods:{
+                deleteItem:function (index) {
+                    let mlayer = this.layers[index];
+                    let {features} = mlayer;
+                    if(features){
+                        // 从map移除layer
+                        map.removeLayer(vectorLayers[index])
+                    }
+                    //移除引用
+                    this.layers.splice(index,1)
+                    vectorSources.splice(index,1)
+                    vectorLayers.splice(index,1)
+                    layer.msg('图层移除成功')
+                },
+                loadLayer:function (index) {
+                    let layerInfo = this.layers[index];
+                    let {dbname,data} = layerInfo;
+                    if(!data){
+                        axios
+                            .get('http://localhost:8080/data/getAll/' + dbname)
+                            .then(function (res) {
+                                let geojson = JSON.parse(res.data.data);
+
+                                //geojson转换为feature，并投影
+                                let features = parser.readFeatures(geojson);
+                                let prosFeatures = tranformFeatures(features,'EPSG:4326','EPSG:3857');
+
+                                //更新数据
+                                layerInfo.features = prosFeatures
+                                layerInfo.data = res.data.data;
+                                layerInfo.id = index
+                                vm.layers.splice(index,1,layerInfo);
+
+                                // 定义矢量数据源，存放wms取得的矢量对象
+                                let vectorSource = new ol.source.Vector();
+                                vectorSource.addFeatures(prosFeatures);
+                                vectorSources.splice(index,1,vectorSource)
+
+                                // 定义矢量图层
+                                let vectorLayer = new ol.layer.Vector({
+                                    source: vectorSource,
+                                    style: getStyle
+                                });
+                                vectorLayers.splice(index,1,vectorLayer)
+
+                                map.addLayer(vectorLayer)
+
+                                //存入store
+                                sessionStorage.setItem(dbname,res.data.data)
+
+                                layer.msg('数据载入成功')
+                            })
+                    }else{
+                        //eg1
+                        layer.msg('已经载入数据');
+                    }
+                },
+                showDetail:function (index) {
+                    // 打开新的窗口
+                    let id = new Date();
+                    miniTab.create({
+                        tabId: id,
+                        href:"practice/Table.html",
+                        title:"详细信息",
+                        isIframe:true
+                    });
+                    sessionStorage.setItem("dataKey",this.layers[index].dbname)
+
+                    parent.sendData = sessionStorage.getItem(this.layers[index].dbname)
+                }
+            },
+            computed:{
+                loadClass(index){
+                    return function(index){
+                        var isloaded = this.layers[index].data != null;
+                        return {
+                            'layui-btn layui-btn-primary': !isloaded,
+                            'layui-btn':isloaded
+                        }
+                    }
+                }, detailClass(index){
+                    return function(index){
+                        var isloaded = this.layers[index].data != null;
+                        return {
+                            'layui-btn layui-btn-disabled': !isloaded,
+                            'layui-btn layui-btn-normal':isloaded
+                        }
+                    }
+                }
+
+            },
+            // watched:{
+            //     layers: {
+            //         handler(newName, oldName) {
+            //         },
+            //         deep:true
+            //     }
+            // }
+        })
+    }
+
+    function initFrom() {
+        layui.use(['form','miniTab'], function(){
+            form = layui.form;
+            miniTab = layui.miniTab;
+
+            // //监听提交
+            // form.on('submit(formDemo)', function(data){
+            //     layer.msg(JSON.stringify(data.field));
+            //     return false;
+            // });
+        });
+    }
+
+    function initLayerui(){
+        layui.use('layer', function(){
+            layer = layui.layer;
+            layer.msg('hello');
+            //目录
+            var siteDir = $('#layerList');
+            if(siteDir[0] && $(window).width() > 750){
+                layer.ready(function(){
+                    layer.open({
+                        type: 1
+                        ,content: siteDir
+                        ,skin: 'layui-layer-dir'
+                        ,area: 'auto'
+                        ,maxHeight: $(window).height() - 300
+                        ,title: '目录'
+                        //,closeBtn: false
+                        ,offset: 'r'
+                        ,shade: false
+                        ,success: function(layero, index){
+                            layer.style(index, {
+                                marginLeft: -15
+                            });
+                        }
+                    });
+                });
+                siteDir.find('li').on('click', function(){
+                    var othis = $(this);
+                    othis.find('a').addClass('layui-this');
+                    othis.siblings().find('a').removeClass('layui-this');
+                });
+
+                //eg1
+                // layer.alert('只想简单的提示');
+                //eg2
+                layer.confirm('is not?', function(index){
+                    //do something
+
+                    layer.close(index);
+                });
+
+                //eg1
+                layer.msg('只想弱弱提示');
+            }
+
+        });
+    }
+
+    // geojson解析器
+    let parser = new ol.format.GeoJSON();
+
+
+    function initMap() {
+        // 定义瓦片数据源
+        tileWMSSource = new ol.source.TileWMS({
+            url: 'http://47.100.37.7:5050/geoserver/wmj/wms',
+            params: {
+                'LAYERS': 'wmj:allGeoInfo',
+                'TILED': true
+            },
+            serverType: 'geoserver',
+            projection: "EPSG:3857"
+        });
+
+
+
+        // 定义瓦片地图
+        tileLayer = new ol.layer.Tile({
+            source: tileWMSSource,
+        });
+
+        var view = new ol.View({
+            projection: 'EPSG:3857',
+            center: tranform([114, 30],'EPSG:4326','EPSG:3857' ) ,
+            zoom: 3
+        })
+
+        map = new ol.Map({
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                }),
+                tileLayer
+            ],
+            target: 'map',
+            view: view
+        });
+    }
+
+
+    function tranformFeatures(features,sourcePro,targetPro) {
+        features.forEach(function (feature) {
+            let geometry = feature.getGeometry();
+            let proGeometry = geometry.transform(sourcePro,targetPro);
+            feature.setGeometry(proGeometry)
+        })
+        return features;
+    }
+
+    function tranform(lonlat,soursePro,targetPro) {
+        return ol.proj.transform(lonlat,soursePro,targetPro)
+    }
+
+
+</script>
+
+</body>
+</html>

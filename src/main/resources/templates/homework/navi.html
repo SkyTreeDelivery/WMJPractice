@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>导航</title>
+</head>
+
+<link rel="stylesheet" href="css/demo-center.css"/>
+<script src="lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="https://webapi.amap.com/maps?v=1.4.15&key=99c4db5a22e31cdd265fb413f8f4c993"></script>
+
+<link rel="stylesheet" href="lib/layui-v2.5.5/css/layui.css" media="all">
+<link rel="stylesheet" href="css/layuimini.css?v=2.0.0" media="all">
+<link rel="stylesheet" href="bootstrap/css/bootstrap.css" media="all">
+<link rel="stylesheet" href="lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<script src="bootstrap/js/bootstrap.js"></script>
+
+<link rel="stylesheet" href="css/map.css">
+
+<style>
+    .input-div{
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+    }
+
+    #clearRoute{
+        position: fixed;
+        left: 1rem;
+        bottom: 2.5rem;
+    }
+</style>
+
+<script type="text/javascript">
+    $(function () {
+        let locDetailStart = null;
+        let locDetailEnd = null;
+        let pointShow = null;
+        let driving = null;
+
+        let spinClass = "fa fa-refresh fa-lg fa-spin";
+        let noSpanClass = "fa fa-refresh fa-lg";
+
+        var map = new AMap.Map('container', {
+            center:[114.35068,30.60543],
+            zoom:11
+        });
+
+        init();
+        //总初始化函数
+        function init(){
+            initPlugin();
+        }
+
+        function initPlugin(){
+            // 添加地图controlBar组件
+            map.plugin(["AMap.ControlBar"],function(){
+                var controlBar = new AMap.ControlBar({
+                    position: {
+                        top:  '150px',
+                        right: '10px'
+                    }
+                });
+                map.addControl(controlBar)
+            });
+
+            //地图切换控件初始化
+            map.plugin(["AMap.MapType"],function(){
+                //地图类型切换
+                var type= new AMap.MapType({
+                    defaultType:0 //使用2D地图
+                });
+                map.addControl(type);
+            });
+
+            //鹰眼初始化
+            map.plugin(["AMap.OverView"],function(){
+                view = new AMap.OverView({isOpen:true});
+                map.addControl(view);
+            });
+
+            AMap.plugin('AMap.Autocomplete', function(){
+                // 实例化Autocomplete
+                var autoOptions_start = {
+                    // input 为绑定输入提示功能的input的DOM ID
+                    input: 'start'
+                };
+                var autoComplete_start= new AMap.Autocomplete(autoOptions_start);
+
+                var autoOptions_end = {
+                    // input 为绑定输入提示功能的input的DOM ID
+                    input: 'end'
+                };
+                var autoComplete_end= new AMap.Autocomplete(autoOptions_end);
+
+                $("#searchBtn").click(function () {
+                    let waitCount = 2;
+
+                    let startText = $("#start").val();
+                    if(startText === ""){
+                        return;
+                    }
+                    autoComplete_start.search(startText, function(status, result) {
+                        // 搜索成功时，result即是对应的匹配数据
+                        if(status !== "complete"&& result.info === 'OK'){
+                            alert("search服务出错");
+                            return;
+                        }
+                        if(result.tips.length === 0){
+                            alert("没有查询出发地");
+                            return;
+                        }
+                        locDetailStart = result.tips[0];
+                        if(locDetailEnd.location === ""){
+                            alert("首选地址为空");
+                            return;
+                        }
+                        waitCount--;
+                        if(waitCount === 0){
+                            $(".amap-sug-result").css("opacity",0);
+                            searchRoute();
+                        }
+
+                    });
+
+                    let endText = $("#end").val();
+                    if(endText === ""){
+                        return;
+                    }
+                    autoComplete_start.search(endText, function(status, result) {
+                        // 搜索成功时，result即是对应的匹配数据
+                        if(status !== "complete"&& result.info === 'OK'){
+                            alert("search服务出错");
+                            return;
+                        }
+                        if(result.tips.length === 0){
+                            alert("没有查询到达地");
+                            return;
+                        }
+                        locDetailEnd = result.tips[0];
+                        if(locDetailEnd.location === ""){
+                            alert("首选地址为空");
+                            return;
+                        }
+                        waitCount--;
+                        if(waitCount === 0){
+                            $(".amap-sug-result").css("opacity",0);
+                            searchRoute();
+                        }
+                    });
+                })
+            });
+
+            //AMap.plugin
+            //汽车路径规划组件
+            AMap.plugin('AMap.Driving', function() {
+                driving = new AMap.Driving({
+                    // 驾车路线规划策略，AMap.DrivingPolicy.LEAST_TIME是最快捷模式
+                    policy: AMap.DrivingPolicy.LEAST_TIME,
+                    size:1,
+                    extensions:'all',
+                    autoFitView:false,
+                    map:map
+                })
+            });
+
+
+            function searchRoute() {
+                let locationStart = locDetailStart.location;
+                let locationEnd = locDetailEnd.location;
+                let lnglatStart = [locationStart.lng,locationStart.lat];
+                let lnglatEnd = [locationEnd.lng,locationEnd.lat];
+                driving.search(lnglatStart, lnglatEnd, function (status, result) {
+                    // 未出错时，result即是对应的路线规划方案
+                    if(status === 'complete' && result.info === 'OK'){
+                        console.log("得到结果了")
+                    }
+                });
+            }
+
+            $("#clearRoute").click(function () {
+                driving.clear();
+            });
+
+            $("#exchange").click(function () {
+                let startText = $("#start").val();
+                let endText = $("#end").val();
+                $("#start").val(endText);
+                $("#end").val(startText);
+            });
+
+            $("#exchange").mouseover(function () {
+                $("#exchangeIcon").attr("class",spinClass);
+            })
+
+            $("#exchange").mouseout(function () {
+                $("#exchangeIcon").attr("class",noSpanClass);
+            })
+
+            $("#start").click(function () {
+                $(".amap-sug-result").css("opacity",1);
+            })
+
+            $("#end").click(function () {
+                $(".amap-sug-result").css("opacity",1);
+            })
+        }
+    });
+
+</script>
+
+<body>
+    <div id="container">
+    </div>
+
+    <div class="info" style="height: 48px;max-width: 60rem;">
+        <div class="input-item">
+            <input id='start' type="text" placeholder="输入出发地" style="height: auto;">
+            <a id="exchange" class="default" href="#" style="margin-left: 10px;margin-right: 10px;">
+            <i id="exchangeIcon" class="fa fa-refresh fa-lg" title="交换方向"></i></a>
+            <input id='end' type="text" placeholder="输入到达地" style="height: auto;">
+            <a id="searchBtn" class="btn btn-primary" title="查询最短路径" href="#" style="margin-left: 10px;">
+                <i class="fa fa-search fa-lg"></i></a>
+        </div>
+        <a id="clearRoute" class="btn btn-primary" title="清空路径" href="#" style="">
+            <i class="fa fa-minus-square fa-lg"></i></a>
+    </div>
+
+</body>
+</html>

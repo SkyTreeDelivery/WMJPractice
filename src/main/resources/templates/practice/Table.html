@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <link rel="stylesheet" href="/lib/layui-v2.5.5/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/layuimini.css?v=2.0.0" media="all">
+    <link rel="stylesheet" href="/lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+    <script src="/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.min.js"></script>
+    <link rel="stylesheet" href="/css/map.css">
+</head>
+
+<style>
+    #demo {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<body>
+<div id="table">
+    <table id="demo"></table>
+</div>
+
+
+<script>
+
+    let vm = null;
+    let table = null;
+
+    init()
+
+    function init() {
+        initVue()
+        initLayui()
+    }
+
+    function initLayui() {
+        layui.use('table', function(){
+            table = layui.table;
+            let init_dbname = sessionStorage.getItem("dataKey") || null;
+            if(init_dbname){
+                let data = sessionStorage.getItem(init_dbname) || null;
+                let allProperties = [];
+                let isFirst = true;
+                if(data){
+                    let geojsonObj = JSON.parse(data)
+                    let features = geojsonObj.features;
+                    features.forEach(function (feature) {
+                        let properties = feature.properties;
+                        allProperties.push(properties)
+                        if(isFirst){
+                            isFirst = false
+                            let cols = []
+                            let oneProperties =  properties;
+                            for(let key  in oneProperties){
+                                console.log(key + '---' + oneProperties[key])
+                                let columnInfo = {
+                                    field: key,
+                                    title: key,
+                                    width:200
+                                }
+                                cols.push(columnInfo)
+                            }
+                            vm.columsInfo = cols
+                        }
+                    })
+                }
+                vm.allProperties = allProperties
+            }
+            console.log(parent.sendData)
+            table.render({
+                elem: '#demo',
+                height: 800,
+                page: true, //开启分页
+                cols: [vm.columsInfo],
+                data: vm.allProperties,
+                toolbar:true,
+                limits:[10,20,30]
+            });
+        });
+    }
+
+    function initVue() {
+        vm = new Vue({
+            el:'#table',
+            data:{
+                allProperties: null,
+                columsInfo:null,
+                tablenames: null
+            }
+        })
+    }
+
+
+
+
+</script>
+
+</body>
+</html>
