@@ -22,7 +22,7 @@ public class WebMVCConfigurer implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // registry.addInterceptor(getAuthInterceptor()).addPathPatterns("/**")
-        //         .excludePathPatterns("/user/login","/user/register","/favicon.ico");
+        //         .excludePathPatterns("/user/login","/user/register","/favicon.ico","/auth/**","/*");
     }
 
     @Override

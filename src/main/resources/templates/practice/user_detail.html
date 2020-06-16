@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+
+<script src="/lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.js"></script>
+<link rel="stylesheet" href="/lib/layui-v2.5.5/css/layui.css" media="all">
+<link rel="stylesheet" href="/css/layuimini.css?v=2.0.0" media="all">
+<link rel="stylesheet" href="/lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+<script src="/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.js"></script>
+<script src="/js/lay-module/layuimini/miniTab.js"></script>
+<script src="/js/axios.js" charset="utf-8"></script>
+
+
+<style>
+    .border-line {
+        height: 148px;
+        width: 1px;
+        background: #e5e9ef;
+        float: left;
+    }
+
+    .pre-container img{
+        float: left;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 1px solid #e6eaf0;
+        margin-left: 16px;
+        margin-top: 25px;
+    }
+</style>
+
+<body>
+
+<div id="updateInfo">
+    <div class="layui-fluid" style="background: #F2F2F2;padding: 15px;">
+        <div class="layui-card">
+            <div class="layui-card-header">设置我的资料</div>
+            <div class="layui-card-body" pad15="">
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">id</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="id" required lay-verify="required"
+                                   autocomplete="off" class="layui-input"  readonly="readonly" v-model="user.id">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">用户名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="name" required  lay-verify="required"
+                                   autocomplete="off" class="layui-input"  readonly="readonly" v-model="user.username">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">昵称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="adcode" required  lay-verify="required"
+                                   autocomplete="off" class="layui-input" v-model="user.nickname">
+                        </div>
+                    </div>
+                        <div class="layui-form-item" style="    float: left;">
+                            <label class="layui-form-label">图片</label>
+                            <div class="layui-input-inline" style="width: auto;">
+                                <div class="layui-upload-drag" id="uploadImage">
+                                    <i class="layui-icon"></i>
+                                    <p>点击上传，或将文件拖拽到此处</p>
+                                    <div id="uploadDemoView" v-show="imageShow">
+                                        <hr>
+                                        <img :src="imageBase64" alt="上传成功后渲染" style="max-width: 196px">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-line"></div>
+                            <div class="pre-container" style="float: left;"><img id="faceImage"></div>
+                        </div>
+
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button id="submit" class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+                            <!--<button type="reset" class="layui-btn layui-btn-primary">重置</button>-->
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    layui.use(['upload','form','miniTab','layer'], function(){
+
+        init()
+
+        function init() {
+            initVue()
+        }
+
+        function initForm() {
+            var upload = layui.upload;
+
+            //上传图片
+            var uploadInst = upload.render({
+                elem: '#uploadImage' //绑定元素
+                ,url: '/user/updateImage' //上传接口
+                ,auto: false // 是否自动上传
+                ,bindAction: '#submit' // 点击提交的按钮
+                ,data: {
+                    id : vm.user.id
+                }
+                ,done: function(res){
+                    // //上传完毕回调
+                    // console.log(res)
+                }
+                ,error: function(){
+                    //请求异常回调
+                }
+                ,choose:function (obj) {
+                    obj.preview(function(index, file, result){
+                        vm.imageShow = true;
+                        vm.imageBase64 = result
+                    })
+                }
+            });
+        }
+
+        function initVue() {
+            vm = new Vue({
+                el:'#updateInfo',
+                data:{
+                    user:{
+                        id:null,
+                        username:null,
+                        nickname:null,
+                        faceImage:null,
+                    },
+                    imageShow:false,
+                    imageBase64: ''
+                }
+                ,methods: {
+
+                }
+                ,computed:{
+
+                },
+                created(){
+                    axios.get('/user/queryUserByToken')
+                        .then(res => {
+                            let response = res.data;
+                            // 验证token是否有效
+                            if(response.status === 403){
+                                return;
+                            }
+                            let user = res.data.data
+                            if (user) {
+                                const {id, username, nickname, faceImage} = user;
+                                this.user = {
+                                    id: id,
+                                    username: username,
+                                    nickname: nickname,
+                                    image: faceImage
+                                }
+                                $("#faceImage").attr('src',faceImage);
+                                initForm()
+                            }
+                        })
+                }
+            })
+        }
+
+    })
+</script>
+
+</body>
+</html>

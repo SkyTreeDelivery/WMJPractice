@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <script src="/lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="/lib/layui-v2.5.5/css/layui.css" media="all">
+    <link rel="stylesheet" href="/css/layuimini.css?v=2.0.0" media="all">
+    <link rel="stylesheet" href="/lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+    <script src="/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.js"></script>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.js"></script>
+    <link rel="stylesheet" href="/css/map.css">
+
+    <script src="/lib/utils/StorageUtils.js" charset="utf-8"></script>
+    <script src="/js/axios.js" charset="utf-8"></script>
+</head>
+
+<style>
+    #demo {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+<body>
+<div id="table">
+    <table class="layui-hide" id="demo" lay-filter="test"></table>
+</div>
+
+<script>
+
+    layui.use(['form','miniTab','layer','table'], function () {
+        var form = layui.form;
+        var miniTab = layui.miniTab;
+        var layer = layui.layer;
+        var table = layui.table;
+        let vm = null;
+
+        init()
+
+        function init() {
+            initVue()
+            initTable()
+        }
+
+        function initTable() {
+            let type = parseInt(getTableDataSourceType());
+            var loading = layer.load('加载中...', {
+                shade: [0.3,'#fff'] //0.1透明度的白色背景
+            });
+            let tablename = sessionStorage.getItem("tablename") || null;
+            if (tablename) {
+                axios
+                    .get('/data/getAll/' + tablename)
+                    .then(res => {
+                        let allProperties = [];  // [{column1: value1, column2 : value2,...}]
+                        let cols = []            // [{field: key,title: key,width: 120,sort: true},{...}...]
+                        let isFirst = true;
+                        let geojsonObj = JSON.parse(res.data.data)
+                        let features = geojsonObj.features;
+                        features.forEach(function (feature) {
+                            let properties = feature.properties;
+                            allProperties.push(properties)
+                            if (isFirst) {
+                                isFirst = false
+                                let oneProperties = properties;
+
+                                cols.push({type: "checkbox", width: 50})
+                                for (let key  in oneProperties) {
+                                    console.log(key + '---' + oneProperties[key])
+                                    let columnInfo = {
+                                        field: key,
+                                        title: key,
+                                        width: 120,
+                                        sort: true,
+                                    }
+                                    cols.push(columnInfo)
+                                }
+                            }
+                        })
+                        vm.columsInfo = cols
+                        vm.allProperties = allProperties
+                        table.render({
+                            elem: '#demo',
+                            height: 800,
+                            page: true, //开启分页
+                            cols: [vm.columsInfo],
+                            data: vm.allProperties,
+                            toolbar: 'default', //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+                            limits: [20, 40, 60]
+                        });
+                        layer.close(loading);
+                    })
+            }
+        }
+
+        function initVue() {
+            vm = new Vue({
+                el: '#table',
+                data: {
+                    allProperties: null,
+                    columsInfo: null,
+                    tablenames: null
+                }
+            })
+        }
+    })
+</script>
+
+</body>
+</html>

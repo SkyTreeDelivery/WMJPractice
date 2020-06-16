@@ -14,10 +14,6 @@ public class UserVO implements Serializable {
     @JSONField(ordinal = 0)
     private Integer id;
     private String username;
-    private Integer age;
-    private Integer gender;
-    private String faceImage;
-    private String faceImageBig;
     private String nickname;
-    private String email;
+    private String faceImage;
 }

@@ -26,6 +26,18 @@
               "href": "practice/MapMerge.html",
               "icon": "fa fa-tachometer",
               "target": "_self"
+            },
+            {
+              "title": "搜索",
+              "href": "practice/Search.html",
+              "icon": "fa fa-tachometer",
+              "target": "_self"
+            },
+            {
+              "title": "全国数据表",
+              "href": "practice/Table.html",
+              "icon": "fa fa-tachometer",
+              "target": "_self"
             }
           ]
         }

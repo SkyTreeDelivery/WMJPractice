@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.js"></script>
+
+<form action="/data/upload"  method="post" enctype="multipart/form-data">
+    <input type="file" value="选择文件" name="file">
+    <input type="text" value="username" name="username">
+    <input type="submit" value="提交">
+</form>
+<br>
+
+<form action="/data/upload"  method="post" enctype="multipart/form-data">
+    <input type="file" value="选择文件" name="file">
+    <input type="text" value="username" name="username">
+    <input type="submit" value="提交" onclick="submit()">
+</form>
+
+<script>
+    function submit(event) {
+        event.preventDefault();
+        axios
+            .get("http://localhost:8080/data/upload")
+            .then(res =>{
+                if(res.data.data){
+                    console.log("上传成功")
+                }
+            })
+    }
+
+</script>
+
+
+</body>
+</html>

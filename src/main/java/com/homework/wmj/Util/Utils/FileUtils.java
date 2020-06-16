@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.UUID;
 
 @Service
 public class FileUtils {
@@ -125,4 +126,61 @@ public class FileUtils {
 			return null;
 		}
 	}
+
+	/**
+	 *  返回绝对路径
+	 * @param multipartFile
+	 * @param saveDir
+	 * @return
+	 * @throws IOException
+	 */
+	public static String saveFile(MultipartFile multipartFile, String saveDir) throws IOException {
+		File saveFile = new File(saveDir);
+		if(!saveFile.exists()){
+			saveFile.mkdirs();
+		}
+		String oriFileName = multipartFile.getOriginalFilename();
+		String savePath = saveDir + UUID.randomUUID() + "_" + oriFileName;
+		multipartFile.transferTo(new File(savePath));
+		return savePath;
+	}
+
+	public static String saveFile(InputStream inputStream, String saveDir, String oriFileName) throws IOException {
+		File saveFile = new File(saveDir);
+		if(!saveFile.exists()){
+			saveFile.mkdir();
+		}
+		String savePath = saveDir + UUID.randomUUID() + "_" + oriFileName;
+		byte[] bytes = inputStream2Bytes(inputStream);
+		saveFile(bytes,savePath);
+		return savePath;
+	}
+
+	public static byte[] inputStream2Bytes(InputStream inputStream) throws IOException {
+		byte[] bytes = new byte[inputStream.available()];
+		BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+		int read = bufferedInputStream.read(bytes);
+		if(read != inputStream.available()){
+			throw new IOException("文件可读取，但读取结果不正确");
+		}
+		return bytes;
+	}
+
+	public static String saveFile(byte[] data, String savePath) throws IOException {
+		File saveFile = new File(savePath);
+		OutputStream outputStream = new FileOutputStream(saveFile);
+		BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+		bufferedOutputStream.write(data,0,data.length);
+		return savePath;
+	}
+
+	public static boolean deleteFile(String path){
+		File file = new File(path);
+		if(file.isFile()){
+			return file.delete();
+		}
+		return false;
+	}
+
+
 }

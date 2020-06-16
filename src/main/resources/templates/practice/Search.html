@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<link rel="stylesheet" href="/css/demo-center.css"/>
+<script src="/lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<link rel="stylesheet" href="/lib/ol/ol.css" type="text/css">
+<script src="/lib/ol/ol.js"></script>
+
+
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.js"></script>
+<link rel="stylesheet" href="/lib/layui-v2.5.5/css/layui.css" media="all">
+<link rel="stylesheet" href="/css/layuimini.css?v=2.0.0" media="all">
+<link rel="stylesheet" href="/lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+<script src="/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+
+<link rel="stylesheet" href="/css/map.css">
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/popup.css">
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.js"></script>
+<script src="/js/lay-module/layuimini/miniTab.js"></script>
+
+
+<script src="/lib/utils/OpenlayersUtils.js" charset="utf-8"></script>
+<script src="/lib/utils/StorageUtils.js" charset="utf-8"></script>
+<script src="/js/axios.js" charset="utf-8"></script>
+
+<style>
+    .floatContainer {
+        padding: 0rem 0rem;
+        margin-bottom: 1rem;
+        position: fixed;
+        top: 2rem;
+        left: 4rem;
+        background-color: white;
+        width: auto;
+        min-width: 22rem;
+        border-width: 0;
+        box-shadow: 0 2px 6px 0 rgba(114, 124, 245, .5);
+    }
+
+    code {
+        padding: 2px 4px;
+        font-size: 90%;
+        color: #c7254e;
+        background-color: #f9f2f4;
+        border-radius: 4px;
+    }
+</style>
+
+<body>
+
+<div id="map" class="map"></div>
+
+
+<div id="app">
+    <div id="popup" class="ol-popup" v-show="popupShow">
+        <a href="#" id="popup-closer" class="ol-popup-closer" @click="popupClose"></a>
+        <div id="popup-content">
+            <div v-for="(value,key) in getProperties(selectFeature)">
+                <code>
+                   {{key}}  :  {{value}}
+                </code>
+            </div>
+            <button  @click="showDetail" class="layui-btn layui-btn-xs" >查看</button>
+        </div>
+    </div>
+
+    <div class="container floatContainer">
+        <div class="input">
+            <input type="text" placeholder="请输入要搜索的地区" autocomplete="off" id="search-input" v-model="searchInput">
+            <div class="hot-list" style="display: block" v-show="isShow">
+                <div v-for="(searchItem, index) in searchList" :key="index" @click="itemClick(index)">
+                    {{searchItem.name}} - {{searchItem.adcode}}
+                </div>
+            </div>
+        </div>
+        <div class="search">
+            <div ></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    layui.use(['form','miniTab','layer'], function(){
+        var form = layui.form;
+        var miniTab = layui.miniTab;
+        var layer = layui.layer;
+
+        var vm = null;
+
+        var map = null;  // 地图
+        var overlay = null;
+
+        var tileWMSSource = null; // 瓦片数据源
+
+        var tileLayer = null;  // 瓦片图层
+
+        var vectorSource = null;
+        var vectorLayer = null;
+
+        var beforeMapLoadedLayers = []
+        // geojson解析器
+        let parser = new ol.format.GeoJSON();
+
+        init()
+
+        function init() {
+            initVue()
+            initMap()
+        }
+
+        function initVue() {
+            vm = new Vue({
+                el:'#app',
+                data:{
+                    provinces:{}
+                    ,searchInput: ''
+                    ,selectFeature: null,
+                    isShow : false
+                }
+                ,created(){
+                    axios
+                        .get("/province/getProvinceBaseInfo")
+                        .then(res => {
+                            // 得到省份的基本信息，用于搜索和进一步查询
+                            let provinces = res.data.data;
+                            let provinceMap = {}
+                            provinces.forEach(province =>{
+                                provinceMap[province.name] = province;
+                            })
+                            console.log( res.data.data)
+                            this.provinces = provinceMap
+                        })
+                }
+                ,methods: {
+                    itemClick(index){
+                        const {searchList,provinces } = this
+                        let provinceInfo = searchList[index]
+                        const {name, adcode} = provinceInfo
+                        let geom = provinces[name].geom || null
+                        // 如果以加载，则不请求
+                        if(geom != null){
+                            return
+                        }
+                        axios
+                            .get("/province/getProvinceByName?requireGeom=true",{
+                                params:{
+                                    name:name,
+                                    requireGeom:true
+                                }
+                            })
+                            .then(res => {
+                                const provincePo = res.data.data;
+                                provinces[name] = provincePo;
+                                const geojson =  JSON.parse( provincePo.geom);
+                                console.log(geojson)
+
+                                // 将feature投影到投影坐标系上
+                                let lonlatFeature = parser.readFeature(geojson);
+                                let meterFeature = tranformFeature(lonlatFeature, 'EPSG:4326','EPSG:3857')
+
+                                // 收起搜索框
+                                vectorSource.addFeature(meterFeature)
+                                this.isShow = false
+                                // layer.msg(name,"图层查询成功！")
+
+                                // 将属性赋给feature
+                                let pros = deepCopy(provincePo);
+                                 delete pros.geom
+                                meterFeature.setProperties(pros)
+
+                                console.log(meterFeature.getProperties())
+                            })
+                    },
+                    showDetail(){
+                        prepareTableDataSource(requireDataType.provinceData)
+                        let id = new Date().getTime();
+                        miniTab.create({
+                            tabId: id,
+                            href:"practice/Table.html",
+                            title:"省份属性",
+                            isIframe:true
+                        });
+                        // 切换tab
+                        miniTab.change(id)
+                    },
+                    getProperties (feature){
+                        if(feature){
+                            let properties = feature.getProperties();
+                            delete properties.geometry;
+                            return properties
+                        }
+                        return null
+                    },
+                    popupClose(){
+                        overlay.setPosition(undefined)
+                    }
+                }
+                ,computed:{
+                    popupShow: function(){
+                        return this.selectFeature != null
+                    },
+                    searchList:function () {
+                        const {searchInput,provinces} = this;
+                        let searchResult = []
+                        let startWith = [] // 以查询字符开头的省份
+                        let contains = [] // 仅包含查询字符，不以查询字符开头的省份
+                        for (let provinceName in provinces) {
+                            let provinceInfo = provinces[provinceName]
+                            if(provinceName.indexOf(searchInput) != -1){
+                                if(provinceName.startsWith(searchInput)){
+                                    startWith.push({
+                                        name: provinceInfo.name,
+                                        adcode: provinceInfo.adcode
+                                    })
+                                }else {
+                                    contains.push({
+                                        name: provinceInfo.name,
+                                        adcode: provinceInfo.adcode
+                                    })
+                                }
+                            }
+                        }
+                        searchResult = startWith.concat(contains)
+                        console.log('查询条件：' + this.searchInput + '查询结果' + searchResult)
+                        return searchResult
+                    }
+                }
+                , watch: {
+                    // 当输入框字符变动时，下拉框才显示
+                    searchInput(newName) {
+                        this.isShow = true
+                    }
+                }
+            })
+        }
+
+        function initPopup() {
+            // popup内容物，外面还有一些openlayer的div
+            var container = document.getElementById('popup');
+            overlay = new ol.Overlay({
+                element: container,
+                autoPan: true,
+                autoPanAnimation: {
+                    duration: 250
+                }
+            });
+        }
+
+        function initMap() {
+            initPopup()
+
+            var highlightStyle = new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255,255,255,0.7)'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#3399CC',
+                    width: 3
+                })
+            });
+            // 定义瓦片数据源
+            tileWMSSource = new ol.source.TileWMS({
+                url: 'http://47.100.37.7:5050/geoserver/wmj/wms',
+                params: {
+                    'LAYERS': 'wmj:allGeoInfo',
+                    'TILED': true
+                },
+                serverType: 'geoserver',
+                projection: "EPSG:3857"
+            });
+
+            // 定义瓦片地图
+            tileLayer = new ol.layer.Tile({
+                source: tileWMSSource,
+            });
+
+            vectorSource = new ol.source.Vector();
+
+            vectorLayer = new ol.layer.Vector({
+                source: vectorSource,
+                style:getStyle
+            })
+
+            var view = new ol.View({
+                projection: 'EPSG:3857',
+                center: tranform([114, 30],'EPSG:4326','EPSG:3857' ) ,
+                zoom: 3
+            })
+
+            map = new ol.Map({
+                layers: [
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM()
+                    }),
+                    tileLayer,
+                    vectorLayer
+                ],
+                overlays: [overlay],
+                target: 'map',
+                view: view
+            });
+
+            for(let index in beforeMapLoadedLayers){
+                map.addLayer(beforeMapLoadedLayers[index])
+            }
+
+            map.on('singleclick', function(e) {
+                map.forEachFeatureAtPixel(e.pixel, function(f) {
+                    const lastFeature = vm.selectFeature;
+                    // 将上一次被选择的要素恢复原样式
+                    if(lastFeature){
+                        lastFeature.setStyle(getStyle(lastFeature))
+                    }
+                    if(f){
+                        // 设置新要素
+                        f.setStyle(highlightStyle);
+                        var coordinate = e.coordinate;
+                        var hdms = ol.coordinate.toStringHDMS(ol.proj.toLonLat(coordinate));
+                        overlay.setPosition(coordinate);
+                    }
+                    vm.selectFeature = f
+                });
+            });
+
+            map.addControl(new ol.control.OverviewMap({
+                collapsed: false
+            }));
+            //添加比例尺控件
+            map.addControl(new ol.control.ScaleLine());
+            //添加缩放控件
+            map.addControl(new ol.control.Zoom());
+            //添加缩放滑动控件
+            map.addControl(new ol.control.ZoomSlider());
+            //添加缩放到当前视图滑动控件
+            map.addControl(new ol.control.ZoomToExtent());
+            //添加全屏控件
+            map.addControl(new ol.control.FullScreen());
+        }
+    })
+
+</script>
+</body>
+</html>

@@ -64,13 +64,17 @@ public class CreateAndModifyTimeAdvice {
             return pjp.proceed();
         }
         Object arg = args[0];
-        Method getGmtCreated = arg.getClass().getMethod("setGmtCreated", LocalDateTime.class);
-        if(getGmtCreated != null){
-            getGmtCreated.invoke(arg, LocalDateTime.now());
-        }
-        Method setGmtModified = arg.getClass().getMethod("setGmtModified",LocalDateTime.class);
-        if(setGmtModified != null){
-            setGmtModified.invoke(arg, LocalDateTime.now());
+        try {
+            Method getGmtCreated = arg.getClass().getMethod("setGmtCreated", LocalDateTime.class);
+            if(getGmtCreated != null){
+                getGmtCreated.invoke(arg, LocalDateTime.now());
+            }
+            Method setGmtModified = arg.getClass().getMethod("setGmtModified",LocalDateTime.class);
+            if(setGmtModified != null){
+                setGmtModified.invoke(arg, LocalDateTime.now());
+            }
+        }catch (NoSuchMethodException e){
+            e.printStackTrace();
         }
         return pjp.proceed();
     }
@@ -85,13 +89,18 @@ public class CreateAndModifyTimeAdvice {
         }
         Object arg = args[0];
 
-        // Method setGmtCreated = arg.getClass().getMethod("setGmtCreated",LocalDateTime.class);
-        // if(setGmtCreated != null){
-        //     setGmtCreated.invoke(arg);
-        // }
-        Method setGmtModified = arg.getClass().getMethod("setGmtModified",LocalDateTime.class);
-        if(setGmtModified != null){
-            setGmtModified.invoke(arg, LocalDateTime.now());
+
+        try {
+            // Method setGmtCreated = arg.getClass().getMethod("setGmtCreated",LocalDateTime.class);
+            // if(setGmtCreated != null){
+            //     setGmtCreated.invoke(arg);
+            // }
+            Method setGmtModified = arg.getClass().getMethod("setGmtModified",LocalDateTime.class);
+            if(setGmtModified != null){
+                setGmtModified.invoke(arg, LocalDateTime.now());
+            }
+        }catch (NoSuchMethodException e){
+            e.printStackTrace();
         }
         return pjp.proceed();
     }
@@ -105,14 +114,20 @@ public class CreateAndModifyTimeAdvice {
             return pjp.proceed();
         }
         Object arg = args[0];
-        // Method setGmtCreated = arg.getClass().getMethod("setGmtCreated",LocalDateTime.class);
-        // if(setGmtCreated != null){
-        //     setGmtCreated.invoke(arg);
-        // }
-        Method setGmtModified = arg.getClass().getMethod("setGmtModified",LocalDateTime.class);
-        if(setGmtModified != null){
-            setGmtModified.invoke(arg, LocalDateTime.now());
+        try {
+            // Method setGmtCreated = arg.getClass().getMethod("setGmtCreated",LocalDateTime.class);
+            // if(setGmtCreated != null){
+            //     setGmtCreated.invoke(arg);
+            // }
+
+            Method setGmtModified = arg.getClass().getMethod("setGmtModified",LocalDateTime.class);
+            if(setGmtModified != null){
+                setGmtModified.invoke(arg, LocalDateTime.now());
+            }
+        }catch (NoSuchMethodException e){
+            e.printStackTrace();
         }
+
         return pjp.proceed();
     }
 }

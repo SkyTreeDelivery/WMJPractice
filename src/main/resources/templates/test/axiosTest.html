@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.min.js"></script>
+
+<body>
+
+<script>
+    axios.defaults.baseURL = 'http://localhost:8080'
+    axios
+        .get('/data/',{
+        params:{
+            ID:12345,
+            name:'zhanghang'
+        }
+    })
+    .then(response => {
+        console.log("请求1 成功")
+    },error => {
+        console.log("请求1 失败")
+    })
+
+    axios
+        .post('/data/',{
+            username:'zhang113751',
+            age:11
+    })
+        .then(response => {
+            console.log("请求1 成功")
+        },error => {
+            console.log("请求1 失败")
+        })
+
+    axios
+        .put('/data/',{
+            username:'zhang113751',
+            age:11
+        })
+        .then(response => {
+            console.log("请求1 成功")
+        },error => {
+            console.log("请求1 失败")
+        })
+
+    axios
+        .delete('/data/',{
+            params:{
+                ID:12345,
+                name:'zhanghang'
+            }
+        })
+
+    axios({
+        method:'get',
+        url:'http://bit.ly/2mTM3nY',
+        responseType:'stream'
+    })
+        .then(function(response) {
+            response.data.pipe(fs.createWriteStream('ada_lovelace.jpg'))
+        });
+
+
+</script>
+
+
+
+</body>
+</html>

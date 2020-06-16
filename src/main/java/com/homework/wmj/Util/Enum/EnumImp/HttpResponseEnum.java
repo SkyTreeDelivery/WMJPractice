@@ -33,7 +33,7 @@ public enum HttpResponseEnum {
 //    BAD_REQUEST(400, "Bad Request", "请求错误，请修正请求"),
 //    UNAUTHORIZED(401, "Unauthorized", "没有被授权或者授权已经失效"),
 //    PAYMENT_REQUIRED(402, "Payment Required", "预留状态"),
-//    FORBIDDEN(403, "Forbidden", "请求被理解，但是拒绝执行"),
+   FORBIDDEN(403, "Forbidden", "请求被理解，但是拒绝执行"),
     NOT_FOUND(404, "Not Found", "资源未找到"),
 //    METHOD_NOT_ALLOWED(405, "Method Not Allowed", "请求方法不允许被执行"),
 //    NOT_ACCEPTABLE(406, "Not Acceptable", "请求的资源不满足请求者要求"),

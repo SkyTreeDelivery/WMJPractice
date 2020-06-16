@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -335,13 +337,19 @@ public class Geotools {
     }
 
     public static String pgtable2geojson(String pgtableName, DataStore postgisDatasore) throws IOException {
+        LocalDateTime start = LocalDateTime.now();
         FeatureSource featureSource = postgisDatasore.getFeatureSource(pgtableName);
         FeatureCollection featureCollection = featureSource.getFeatures();
 
         FeatureJSON featureJSON = new FeatureJSON(new GeometryJSON(15));
         featureJSON.setEncodeNullValues(true);
 
-        return featureJSON.toString(featureCollection);
+        String result = featureJSON.toString(featureCollection);
+
+        LocalDateTime end = LocalDateTime.now();
+        long time = Duration.between(start, end).toMillis();
+        logger.info("执行时间：" + time + "ms");
+        return result;
     }
 
     public static void deletePgtable(String pgtableName, DataStore postgisDatasore) throws IOException {

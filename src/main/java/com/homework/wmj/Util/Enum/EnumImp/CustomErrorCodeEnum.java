@@ -10,6 +10,7 @@ public enum CustomErrorCodeEnum {
     PARAM_VERIFY_ERROR(10005, "参数未通过验证，缺失、为空或无效，请检查入参"),
     PARAM_NOT_TOKEN(10006,"请求参数未提供token，请追加token参数"),
     PARAM_INVALID_TOKEN(10007,"token无效，请使用正确的已注册的token"),
+    PARAM_EXPIRED_TOKEN(10008,"token无效，已过期"),
 
     GEOJSON_CANT_PARSE(11002,"无法解析为合法的geojson类型"),
     GEOJSON_TYPE_NOT_FIX(11001,"geojson的类型不符"),
@@ -32,6 +33,7 @@ public enum CustomErrorCodeEnum {
     NO_MESSAGE(30007,"消息不存在"),
     NO_USER_TAG(30008,"用户标签不存在"),
     FACE_IMAGE_UPLOAD_ERROR(30009,"用户照片上传失败"),
+    FILE_SUFFIX_DISMATCH(30010,"不支持该文件类型"),
 
     /* 系统错误：40001-49999 */
     SYSTEM_INNER_ERROR(40001, "系统繁忙，请稍后重试"),

@@ -1,6 +1,7 @@
 package com.homework.wmj.Advice;
 
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.homework.wmj.Util.Enum.EnumImp.HttpResponseEnum;
 import com.homework.wmj.Util.Exception.CustomException;
 import com.homework.wmj.Util.HttpResultBuiler;
@@ -36,5 +37,21 @@ public class CustomExceptionHandler {
             response.setCharacterEncoding("utf-8");
             return HttpResultBuiler.error500(ex.getMessage());
         }
+    }
+
+    /**
+     *  处理token验证异常 JWTVerificationException
+     * @param ex
+     * @param request
+     * @param response
+     * @return
+     */
+    @ExceptionHandler(JWTVerificationException.class)
+    @ResponseBody
+    public HttpResultBuiler.HttpResult<Object> TokenExpiredExceptionHandle(Exception ex, HttpServletRequest request, HttpServletResponse response){
+        logger.info(ex.getMessage());
+        ex.printStackTrace();
+        // 返回403错误
+        return HttpResultBuiler.error(HttpResponseEnum.FORBIDDEN,ex.getMessage());
     }
 }

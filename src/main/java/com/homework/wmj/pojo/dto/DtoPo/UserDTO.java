@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -22,16 +20,7 @@ public class UserDTO  implements Serializable {
     @Size(min = 6,max = 15,message = "密码在6-15个字符范围内")
     private String password;
 
-    @Min(0)
-    private Integer age;
-
-    @NotNull(message = "gender不能为空")
-    private Integer gender;
-
     @NotNull(message = "nickname不能为空")
     @Size(max = 16,message = "nickname最大为16个字符")
     private String nickname;
-
-    @Email
-    private String email;
 }

@@ -76,6 +76,7 @@ layui.define(["element", "jquery"], function (exports) {
          * @param tabId
          */
         change: function (tabId) {
+            let element = parent.layui.element;
             element.tabChange('layuiminiTab', tabId);
         },
 

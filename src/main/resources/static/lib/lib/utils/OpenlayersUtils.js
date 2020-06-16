@@ -31,11 +31,12 @@ styles = {
     }),
     'MultiPolygon': new ol.style.Style({
         stroke: new ol.style.Stroke({
-            color: 'yellow',
-            width: 1
+            color: 'blue',
+            lineDash: [4],
+            width: 3
         }),
         fill: new ol.style.Fill({
-            color: 'rgba(255, 255, 0, 0.1)'
+            color: 'rgba(0, 0, 255,0.5)'
         })
     }),
     'Polygon': new ol.style.Style({
@@ -72,4 +73,29 @@ styles = {
 var getStyle = function(feature) {
     return styles[feature.getGeometry().getType()];
 };
+
+
+function tranformFeatures(features,sourcePro,targetPro) {
+    features.forEach(function (feature) {
+        let geometry = feature.getGeometry();
+        let proGeometry = geometry.transform(sourcePro,targetPro);
+        feature.setGeometry(proGeometry)
+    })
+    return features;
+}
+
+function tranformFeature(feature,sourcePro,targetPro) {
+    let geometry = feature.getGeometry();
+    let proGeometry = geometry.transform(sourcePro,targetPro);
+    feature.setGeometry(proGeometry)
+    return feature;
+}
+
+function tranform(lonlat,soursePro,targetPro) {
+    return ol.proj.transform(lonlat,soursePro,targetPro)
+}
+
+function deepCopy(obj) {
+    return JSON.parse(JSON.stringify(obj))
+}
 

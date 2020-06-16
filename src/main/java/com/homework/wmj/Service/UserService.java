@@ -5,6 +5,9 @@ import com.homework.wmj.Util.Exception.CustomException;
 import com.homework.wmj.pojo.dto.DtoPo.UserDTO;
 import com.homework.wmj.pojo.po.User;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @Service
 public interface UserService {
@@ -14,7 +17,7 @@ public interface UserService {
 
     Boolean verifyUser(String username, String password);
 
-    User login(String username, String password) throws CustomException;
+    Map<String, Object> login(String username, String password) throws CustomException;
 
     Boolean logout(String token) throws CustomException;
 
@@ -38,6 +41,8 @@ public interface UserService {
 
     Boolean removeUserById(Integer userId);
 
-    Boolean verifyToken(String token);
+    Boolean verifyToken(String token) throws CustomException;
+
+    User updatePhoto(MultipartFile multipartFile, Integer id);
 
 }

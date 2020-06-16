@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 
 // @SpringBootTest
 class GaoDeMapApplicationTests {
@@ -37,6 +39,14 @@ class GaoDeMapApplicationTests {
 			System.err.println( e.getClass().getName()+": "+ e.getMessage() );
 			System.exit(0);
 		}
+	}
+
+	@Test
+	public void testC(){
+		String[] array = {"1","2","3","4"};
+		List<String> list = Arrays.asList(array);
+		boolean flag = list.contains("2");
+		int i = list.indexOf("1");
 	}
 
 }

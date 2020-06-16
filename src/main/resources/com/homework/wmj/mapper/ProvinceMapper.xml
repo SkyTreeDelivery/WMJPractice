@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.homework.wmj.mapper.ProvinceMapper">
+  <resultMap id="BaseResultMap" type="com.homework.wmj.pojo.po.Province">
+    <result column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="adcode" jdbcType="VARCHAR" property="adcode" />
+    <result column="geo_count" jdbcType="INTEGER" property="geoCount" />
+    <result column="geom" jdbcType="OTHER" property="geom" />
+    <result column="image" jdbcType="VARCHAR" property="image" />
+    <result column="intro" jdbcType="VARCHAR" property="intro" />
+    <result column="gmt_created" jdbcType="TIMESTAMP" property="gmtCreated" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+  </resultMap>
+  <insert id="insert" parameterType="com.homework.wmj.pojo.po.Province">
+    insert into province (id, name, adcode, 
+      geo_count, geom, image, 
+      intro, gmt_created, gmt_modified
+      )
+    values (#{id,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{adcode,jdbcType=VARCHAR}, 
+      #{geoCount,jdbcType=INTEGER}, #{geom,jdbcType=OTHER}, #{image,jdbcType=VARCHAR}, 
+      #{intro,jdbcType=VARCHAR}, #{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.homework.wmj.pojo.po.Province">
+    insert into province
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="name != null">
+        name,
+      </if>
+      <if test="adcode != null">
+        adcode,
+      </if>
+      <if test="geoCount != null">
+        geo_count,
+      </if>
+      <if test="geom != null">
+        geom,
+      </if>
+      <if test="image != null">
+        image,
+      </if>
+      <if test="intro != null">
+        intro,
+      </if>
+      <if test="gmtCreated != null">
+        gmt_created,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="adcode != null">
+        #{adcode,jdbcType=VARCHAR},
+      </if>
+      <if test="geoCount != null">
+        #{geoCount,jdbcType=INTEGER},
+      </if>
+      <if test="geom != null">
+        #{geom,jdbcType=OTHER},
+      </if>
+      <if test="image != null">
+        #{image,jdbcType=VARCHAR},
+      </if>
+      <if test="intro != null">
+        #{intro,jdbcType=VARCHAR},
+      </if>
+      <if test="gmtCreated != null">
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+</mapper>

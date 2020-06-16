@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("chat_user")
+@TableName("system_user")
 public class User implements Serializable {
 
     private Integer id;
@@ -20,18 +20,11 @@ public class User implements Serializable {
 
     private String password;
 
-    private Integer age;
-
-    private Integer gender;
-
     private String nickname;
-
-    private String email;
-
-//    @TableField(updateStrategy = FieldStrategy.IGNORED)
-    private String token;
 
     private LocalDateTime gmtCreated;
 
     private LocalDateTime gmtModified;
+
+    private String faceImage;
 }

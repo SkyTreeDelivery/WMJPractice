@@ -32,10 +32,8 @@ public class ResponseBodyUniformUnity implements ResponseBodyAdvice {
             //如果已经是HttpResult类型，就直接返回
             if (o instanceof HttpResultBuiler.HttpResult) {
                 return o;
-            } else if (o instanceof Boolean) {
-                Boolean isOk = (Boolean) o;
-                return isOk ? HttpResultBuiler.ok(o) : HttpResultBuiler.error500();
-            } else if (o instanceof LinkedHashMap) {
+            }
+            else if (o instanceof LinkedHashMap) {
                 try {
 //                    springmvc使用LinkedHashMap封装错误信息，将其转换为HttpResult对象返回
                     String s = JSON.toJSONString(o);

@@ -20,12 +20,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         //从header和param中取得token，如都没有或者结果为空字符串，则抛出异常
-        String token = request.getHeader("token");
+        String token = request.getHeader("Authorization");
         if(StringUtils.isBlank(token)){
-            token = (String) request.getParameter("token");
-            if(StringUtils.isBlank(token)){
-                throw new CustomException(CustomErrorCodeEnum.PARAM_NOT_TOKEN);
-            }
+            throw new CustomException(CustomErrorCodeEnum.PARAM_NOT_TOKEN);
         }
         //如token没有被使用，则抛出异常
         Boolean result = userService.verifyToken(token);

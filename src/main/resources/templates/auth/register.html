@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>登录</title>
+</head>
+
+<link rel="stylesheet" href="/css/auth.css" media="all">
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.6/vue.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.js"></script>
+<script src="/js/axios.js" charset="utf-8"></script>
+<body>
+
+<div id="app">
+    <div class="lowin">
+        <div class="lowin-brand">
+            <img src="/images/kodinger.jpg" alt="logo">
+        </div>
+        <div class="lowin-wrapper">
+
+            <div class="lowin-box lowin-register">
+                <div class="lowin-box-inner">
+                    <form id="form"  @submit.prevent="submit">
+                        <p>让我们创建您的帐户</p>
+
+                        <div class="lowin-group">
+                            <label>用户名</label>
+                            <input type="text" name="username" class="lowin-input" v-model="register.username.value"
+                                   :placeholder="register.username.msg"
+                                   @blur="blurHandler" @keyup="keyupHandler">
+                            <div class="error-message">{{register.username.showMsg}}</div>
+                        </div>
+                        <div class="lowin-group">
+                            <label>密码</label>
+                            <input type="text" name="password" class="lowin-input" v-model="register.password.value"
+                                   :placeholder="register.password.msg"
+                                   @blur="blurHandler" @keyup="keyupHandler">
+                            <div class="error-message">{{register.password.showMsg}}</div>
+                        </div>
+                        <div class="lowin-group">
+                            <label>再次确认密码</label>
+                            <input type="text" name="check_password" class="lowin-input" v-model="register.check_password.value"
+                                   :placeholder="register.check_password.msg"
+                                   @blur="blurHandler" @keyup="keyupHandler">
+                            <div class="error-message">{{register.check_password.showMsg}}</div>
+                        </div>
+                        <div class="lowin-group">
+                            <label>昵称</label>
+                            <input type="text" name="nickname" class="lowin-input" v-model="register.nickname.value"
+                                   :placeholder="register.nickname.msg"
+                                   @blur="blurHandler" @keyup="keyupHandler">
+                            <div class="error-message">{{register.nickname.showMsg}}</div>
+                        </div>
+                        <input type="submit" class="lowin-btn" value="注册">
+
+                        <div class="text-foot">
+                            已经有账户了? <a href="/auth/login.html" class="login-link">登录</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <footer class="lowin-footer">
+
+        </footer>
+    </div>
+</div>
+
+<script>
+
+    init()
+
+    function init() {
+        initVue()
+    }
+
+    function initVue() {
+        vm = new Vue({
+            el: '#app',
+            data: {
+                register: {
+                    username: {
+                        value: '',
+                        name: 'username',
+                        msg: "用户名",
+                        regix: /^[a-zA-Z][a-zA-Z0-9_]{5,15}$/,
+                        showMsg: '',
+                        first: true,
+                        errorMsg: {
+                            success: '',
+                            regixMsg: '以字母开头，长度6-16，可以包含字母、数字、下划线',
+                            usernameIsExst: '用户名已存在'
+                        }
+                    },
+                    password: {
+                        value: '',
+                        name: 'password',
+                        msg: "密码",
+                        regix: /^[a-zA-Z][a-zA-Z0-9_]{5,15}$/,
+                        showMsg: '',
+                        first: true,
+                        errorMsg: {
+                            success: '',
+                            regixMsg: '以字母开头，长度6-16，可以包含字母、数字、下划线'
+                        }
+                    },
+                    check_password: {
+                        value: '',
+                        name: 'check_password',
+                        msg: "与上一次输入相同",
+                        regix: /^[a-zA-Z][a-zA-Z0-9_]{5,15}$/,
+                        showMsg: '',
+                        first: true,
+                        errorMsg: {
+                            success: '',
+                            regixMsg: '以字母开头，长度6-16，可以包含字母、数字、下划线',
+                            dismatch: '两次输入的密码不一致'
+                        }
+                    },
+                    nickname: {
+                        value: '',
+                        name: 'nickname',
+                        msg: "昵称",
+                        regix: /^[\u4E00-\u9FA5A-Za-z0-9_]{1,10}$/,
+                        showMsg: '',
+                        first: true,
+                        errorMsg: {
+                            success: '',
+                            regixMsg: '长度1-10，可以包含中文、字母、数字、下划线'
+                        }
+                    }
+                }
+            }
+            , methods: {
+                // 每次键入都会触发
+                keyupHandler(event) {
+                    let name = event.target.getAttribute('name');
+                    let inputModel = this.register[name]
+                    // 第一次不显示错误信息
+                    if (inputModel.first) {
+                        inputModel.showMsg = inputModel.errorMsg.success
+                        return
+                    }
+                    // 正则表达式没通过显示错误信息
+                    if (!inputModel.regix.test(inputModel.value)) {
+                        inputModel.showMsg = inputModel.errorMsg.regixMsg;
+                        return
+                    }
+
+                    // 正则表达式通过不显示错误信息
+                    inputModel.showMsg = inputModel.errorMsg.success;
+                },
+                // input失去焦点触发
+                blurHandler(event) {
+                    let name = event.target.getAttribute('name');
+                    let inputModel = this.register[name]
+                    // 第一次输入不显示
+                    inputModel.first = false;
+
+                    // 正则表达式没通过显示错误信息
+                    if (!inputModel.regix.test(inputModel.value)) {
+                        inputModel.showMsg = inputModel.errorMsg.regixMsg;
+                        return
+                    }
+
+                    // 通过正则进行服务器端验证
+                    // username 需要判断是否已存在
+                    let inputName = inputModel.name
+                    if (inputName === 'username') {
+                        const {value: username} = inputModel;
+                        axios.get("/user/userIsExistByUsername", {
+                            params: {
+                                username: username
+                            }
+                        })
+                            .then(res => {
+                                let isExist = res.data.data
+                                // 给变serverMsg,如不为空串，则渲染错误信息
+                                inputModel.showMsg = isExist ? inputModel.errorMsg.usernameIsExst : inputModel.errorMsg.success
+                            })
+                        return;
+                    } else if (inputName === 'check_password') {
+                        inputModel.showMsg =  this.register.password.value === inputModel.value ?
+                            inputModel.errorMsg.success :
+                            inputModel.errorMsg.dismatch
+                        return;
+                    }
+                },
+                submit: function () {
+                    let params = {}
+                    for (let name in this.register) {
+                        let inputItem = this.register[name];
+                        params[name] = inputItem.value
+                    }
+                    delete params.check_password
+                    axios.get('/user/register', {
+                        params:params
+                    })
+                        .then(res => {
+                            let user = res.data.data;
+                            if(user){
+                                window.location.href="/auth/login.html";
+                            }
+                        })
+                }
+            }
+            , computed: {}
+        })
+    }
+</script>
+</body>
+</html>
